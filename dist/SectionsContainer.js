@@ -171,7 +171,8 @@ var SectionsContainer = _react2['default'].createClass({
     var delta = Math.max(-1, Math.min(1, e.wheelDelta || -e.detail));
     var position = this.state.sectionScrolledPosition + delta * this.state.windowHeight;
     var activeSection = this.state.activeSection - delta;
-    var maxPosition = 0 - this.props.children.length * this.state.windowHeight;
+    var childrenLength = _react2['default'].Children.count(this.props.children);
+    var maxPosition = 0 - childrenLength * this.state.windowHeight;
 
     if (position > 0 || maxPosition === position || this.state.scrollingStarted) {
       return this._addMouseWheelEventHandlers();
