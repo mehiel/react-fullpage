@@ -183,6 +183,12 @@ var SectionsContainer = _react2['default'].createClass({
       window.location.hash = '#' + index;
     }
 
+    var onSectionChange = this.props.onSectionChange;
+    var oldSection = this.state.activeSection;
+    if (onSectionChange) {
+      onSectionChange({ target: this }, activeSection, oldSection); // fake ev, new section, old section
+    }
+
     this.setState({
       activeSection: activeSection,
       scrollingStarted: true,

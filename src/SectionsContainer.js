@@ -167,11 +167,18 @@ const SectionsContainer = React.createClass({
       window.location.hash = '#' + index;
     }
 
+    const onSectionChange = this.props.onSectionChange;
+    const oldSection = this.state.activeSection;
+    if(onSectionChange) {
+      onSectionChange(activeSection, oldSection); // new section, old section
+    }
+
     this.setState({
       activeSection: activeSection,
       scrollingStarted: true,
       sectionScrolledPosition: position
     });
+
 
     setTimeout(() => {
       this.setState({
