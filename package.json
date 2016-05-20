@@ -8,7 +8,7 @@
     "release": "./node_modules/babel/bin/babel.js src --out-dir dist",
     "start": "node example/server.js",
     "dev": "./node_modules/babel/bin/babel.js src --out-dir dist --watch",
-    "clean": "rm -rf dist && rm example/bundle.js",
+    "clean": "rm -rf dist && rm -f example/bundle.js",
     "build": "npm run clean && npm run release && ./node_modules/webpack/bin/webpack.js --progress --colors --config example/webpack.config.js"
   },
   "repository": {

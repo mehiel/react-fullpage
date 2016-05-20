@@ -19877,7 +19877,8 @@
 	    activeClass: _react2['default'].PropTypes.string,
 	    sectionPaddingTop: _react2['default'].PropTypes.string,
 	    sectionPaddingBottom: _react2['default'].PropTypes.string,
-	    arrowNavigation: _react2['default'].PropTypes.bool
+	    arrowNavigation: _react2['default'].PropTypes.bool,
+	    onLocationChange: _react2['default'].PropTypes.func
 	  },
 
 	  childContextTypes: {
@@ -19908,7 +19909,10 @@
 	      activeClass: 'active',
 	      sectionPaddingTop: '0',
 	      sectionPaddingBottom: '0',
-	      arrowNavigation: true
+	      arrowNavigation: true,
+	      onLocationChange: function onLocationChange(h) {
+	        return window.location.hash = h;
+	      }
 	    };
 	  },
 
@@ -19938,6 +19942,10 @@
 	        window.addEventListener('keydown', this._handleArrowKeys);
 	      }
 	    }
+	  },
+
+	  _setNewLocation: function _setNewLocation(h) {
+	    this.props.onLocationChange(h);
 	  },
 
 	  _addCSS3Scroll: function _addCSS3Scroll() {
@@ -20028,13 +20036,13 @@
 
 	    var index = this.props.anchors[activeSection];
 	    if (!this.props.anchors.length || index) {
-	      window.location.hash = '#' + index;
+	      this._setNewLocation('#' + index);
 	    }
 
 	    var onSectionChange = this.props.onSectionChange;
 	    var oldSection = this.state.activeSection;
 	    if (onSectionChange) {
-	      onSectionChange({ target: this }, activeSection, oldSection); // fake ev, new section, old section
+	      onSectionChange(activeSection, oldSection); // new section, old section
 	    }
 
 	    this.setState({
@@ -20078,7 +20086,7 @@
 	    var hash = this.props.anchors[direction];
 
 	    if (!this.props.anchors.length || hash) {
-	      window.location.hash = '#' + hash;
+	      this._setNewLocation('#' + hash);
 	    }
 
 	    this._handleSectionTransition(direction);

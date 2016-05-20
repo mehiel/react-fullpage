@@ -16,6 +16,7 @@ const SectionsContainer = React.createClass({
     sectionPaddingTop:      React.PropTypes.string,
     sectionPaddingBottom:   React.PropTypes.string,
     arrowNavigation:        React.PropTypes.bool,
+    onLocationChange:       React.PropTypes.func,
   },
 
   childContextTypes: {
@@ -46,7 +47,8 @@ const SectionsContainer = React.createClass({
       activeClass:          'active',
       sectionPaddingTop:    '0',
       sectionPaddingBottom: '0',
-      arrowNavigation:      true
+      arrowNavigation:      true,
+      onLocationChange:     h => window.location.hash = h,
     };
   },
 
@@ -76,6 +78,10 @@ const SectionsContainer = React.createClass({
         window.addEventListener('keydown', this._handleArrowKeys);
       }
     }
+  },
+
+  _setNewLocation(h) {
+    this.props.onLocationChange(h);
   },
 
   _addCSS3Scroll() {
@@ -164,7 +170,7 @@ const SectionsContainer = React.createClass({
 
     let index = this.props.anchors[activeSection];
     if (!this.props.anchors.length || index) {
-      window.location.hash = '#' + index;
+      this._setNewLocation('#' + index);
     }
 
     const onSectionChange = this.props.onSectionChange;
@@ -215,7 +221,7 @@ const SectionsContainer = React.createClass({
     let hash      = this.props.anchors[direction];
 
     if (!this.props.anchors.length || hash) {
-      window.location.hash = '#' + hash;
+      this._setNewLocation('#' + hash);
     }
 
     this._handleSectionTransition(direction);
