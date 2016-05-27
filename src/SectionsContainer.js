@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { getTouchEventListeners } from './utils';
 
 const SectionsContainer = React.createClass({
 
@@ -63,12 +64,18 @@ const SectionsContainer = React.createClass({
 
   componentWillUnmount() {
     window.removeEventListener('resize', this._handleResize);
+    this._removeMouseWheelEventHandlers();
   },
 
   componentDidMount() {
     window.addEventListener('resize', this._handleResize);
 
     if (!this.props.scrollBar) {
+      const { onTouchStart, onTouchMove, onTouchEnd } = getTouchEventListeners(this._onTouchHandler);
+      this._onTouchStart = onTouchStart;
+      this._onTouchMove = onTouchMove;
+      this._onTouchEnd = onTouchEnd;
+
       this._addCSS3Scroll();
       this._handleAnchor(); //Go to anchor in case we found it in the URL
 
@@ -147,11 +154,68 @@ const SectionsContainer = React.createClass({
   _addMouseWheelEventHandlers() {
     window.addEventListener('mousewheel', this._mouseWheelHandler, false);
     window.addEventListener('DOMMouseScroll', this._mouseWheelHandler, false);
+    window.addEventListener('touchstart', this._onTouchStart, false);
+    window.addEventListener('touchmove', this._onTouchMove, false);
+    window.addEventListener('touchend', this._onTouchEnd, false);
   },
 
   _removeMouseWheelEventHandlers() {
     window.removeEventListener('mousewheel', this._mouseWheelHandler);
     window.removeEventListener('DOMMouseScroll', this._mouseWheelHandler);
+    window.removeEventListener('touchstart', this._onTouchStart, false);
+    window.removeEventListener('touchmove', this._onTouchMove, false);
+    window.removeEventListener('touchend', this._onTouchEnd, false);
+  },
+
+  _onTouchHandler(e, direction, phase, swipetype, distance) {
+    // console.log('onTouchHandler :: e :: ', e, direction, phase, swipetype, distance);
+
+    // is touch ended with X swipe
+    const isEndWithSwipeOnX = (phase === 'end' && (swipetype === 'up' || swipetype === 'down'));
+    // don't calc children when not swipe X (we'll skip eitherways)
+    let childrenLength = isEndWithSwipeOnX ? React.Children.count(this.props.children) : 0;
+    const avoidGoUp = (this.state.activeSection === 0 && swipetype === 'down'); // don't go up when on top
+    const avoidGoDown = (this.state.activeSection === childrenLength - 1 && swipetype === 'up'); // ^^ opposite
+
+    if(!isEndWithSwipeOnX || avoidGoUp || avoidGoDown) {
+      // console.log('onTouchHandler :: e :: ignore');
+      e.preventDefault();
+      return;
+    }
+
+    // console.log('onTouchHandler :: state :: ', this.state.activeSection, this.state.sectionScrolledPosition);
+
+	  let delta         = swipetype === 'up' ? -1 : swipetype === 'down' ? 1 : 0;
+    let position      = this.state.sectionScrolledPosition + (delta * this.state.windowHeight);
+    let activeSection = this.state.activeSection - delta;
+    let maxPosition   = 0 - (childrenLength * this.state.windowHeight);
+
+    // console.log('onTouchHandler :: new data', delta, position, activeSection, childrenLength, maxPosition);
+
+    let index = this.props.anchors[activeSection];
+    if (!this.props.anchors.length || index) {
+      this._setNewLocation('#' + index);
+    }
+
+    const onSectionChange = this.props.onSectionChange;
+    const oldSection = this.state.activeSection;
+    if(onSectionChange) {
+      onSectionChange(activeSection, oldSection); // new section, old section
+    }
+
+    this.setState({
+      activeSection: activeSection,
+      scrollingStarted: true,
+      sectionScrolledPosition: position
+    });
+
+
+    setTimeout(() => {
+      this.setState({
+        scrollingStarted: false
+      });
+      this._addMouseWheelEventHandlers();
+    }, this.props.delay + 300);
   },
 
   _mouseWheelHandler() {

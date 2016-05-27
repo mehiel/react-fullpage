@@ -19835,9 +19835,9 @@
 
 	module.exports = {
 	  SectionsContainer: __webpack_require__(163),
-	  Section: __webpack_require__(164),
-	  Header: __webpack_require__(165),
-	  Footer: __webpack_require__(166)
+	  Section: __webpack_require__(166),
+	  Header: __webpack_require__(167),
+	  Footer: __webpack_require__(168)
 	};
 
 /***/ },
@@ -19861,6 +19861,8 @@
 	var _reactDom = __webpack_require__(161);
 
 	var _reactDom2 = _interopRequireDefault(_reactDom);
+
+	var _utils = __webpack_require__(164);
 
 	var SectionsContainer = _react2['default'].createClass({
 	  displayName: 'SectionsContainer',
@@ -19927,12 +19929,23 @@
 
 	  componentWillUnmount: function componentWillUnmount() {
 	    window.removeEventListener('resize', this._handleResize);
+	    this._removeMouseWheelEventHandlers();
 	  },
 
 	  componentDidMount: function componentDidMount() {
 	    window.addEventListener('resize', this._handleResize);
 
 	    if (!this.props.scrollBar) {
+	      var _getTouchEventListeners = (0, _utils.getTouchEventListeners)(this._onTouchHandler);
+
+	      var onTouchStart = _getTouchEventListeners.onTouchStart;
+	      var onTouchMove = _getTouchEventListeners.onTouchMove;
+	      var onTouchEnd = _getTouchEventListeners.onTouchEnd;
+
+	      this._onTouchStart = onTouchStart;
+	      this._onTouchMove = onTouchMove;
+	      this._onTouchEnd = onTouchEnd;
+
 	      this._addCSS3Scroll();
 	      this._handleAnchor(); //Go to anchor in case we found it in the URL
 
@@ -20011,15 +20024,73 @@
 	  _addMouseWheelEventHandlers: function _addMouseWheelEventHandlers() {
 	    window.addEventListener('mousewheel', this._mouseWheelHandler, false);
 	    window.addEventListener('DOMMouseScroll', this._mouseWheelHandler, false);
+	    window.addEventListener('touchstart', this._onTouchStart, false);
+	    window.addEventListener('touchmove', this._onTouchMove, false);
+	    window.addEventListener('touchend', this._onTouchEnd, false);
 	  },
 
 	  _removeMouseWheelEventHandlers: function _removeMouseWheelEventHandlers() {
 	    window.removeEventListener('mousewheel', this._mouseWheelHandler);
 	    window.removeEventListener('DOMMouseScroll', this._mouseWheelHandler);
+	    window.removeEventListener('touchstart', this._onTouchStart, false);
+	    window.removeEventListener('touchmove', this._onTouchMove, false);
+	    window.removeEventListener('touchend', this._onTouchEnd, false);
+	  },
+
+	  _onTouchHandler: function _onTouchHandler(e, direction, phase, swipetype, distance) {
+	    var _this = this;
+
+	    // console.log('onTouchHandler :: e :: ', e, direction, phase, swipetype, distance);
+
+	    // is touch ended with X swipe
+	    var isEndWithSwipeOnX = phase === 'end' && (swipetype === 'up' || swipetype === 'down');
+	    // don't calc children when not swipe X (we'll skip eitherways)
+	    var childrenLength = isEndWithSwipeOnX ? _react2['default'].Children.count(this.props.children) : 0;
+	    var avoidGoUp = this.state.activeSection === 0 && swipetype === 'down'; // don't go up when on top
+	    var avoidGoDown = this.state.activeSection === childrenLength - 1 && swipetype === 'up'; // ^^ opposite
+
+	    if (!isEndWithSwipeOnX || avoidGoUp || avoidGoDown) {
+	      // console.log('onTouchHandler :: e :: ignore');
+	      e.preventDefault();
+	      return;
+	    }
+
+	    // console.log('onTouchHandler :: state :: ', this.state.activeSection, this.state.sectionScrolledPosition);
+
+	    var delta = swipetype === 'up' ? -1 : swipetype === 'down' ? 1 : 0;
+	    var position = this.state.sectionScrolledPosition + delta * this.state.windowHeight;
+	    var activeSection = this.state.activeSection - delta;
+	    var maxPosition = 0 - childrenLength * this.state.windowHeight;
+
+	    // console.log('onTouchHandler :: new data', delta, position, activeSection, childrenLength, maxPosition);
+
+	    var index = this.props.anchors[activeSection];
+	    if (!this.props.anchors.length || index) {
+	      this._setNewLocation('#' + index);
+	    }
+
+	    var onSectionChange = this.props.onSectionChange;
+	    var oldSection = this.state.activeSection;
+	    if (onSectionChange) {
+	      onSectionChange(activeSection, oldSection); // new section, old section
+	    }
+
+	    this.setState({
+	      activeSection: activeSection,
+	      scrollingStarted: true,
+	      sectionScrolledPosition: position
+	    });
+
+	    setTimeout(function () {
+	      _this.setState({
+	        scrollingStarted: false
+	      });
+	      _this._addMouseWheelEventHandlers();
+	    }, this.props.delay + 300);
 	  },
 
 	  _mouseWheelHandler: function _mouseWheelHandler() {
-	    var _this = this;
+	    var _this2 = this;
 
 	    this._removeMouseWheelEventHandlers();
 
@@ -20052,10 +20123,10 @@
 	    });
 
 	    setTimeout(function () {
-	      _this.setState({
+	      _this2.setState({
 	        scrollingStarted: false
 	      });
-	      _this._addMouseWheelEventHandlers();
+	      _this2._addMouseWheelEventHandlers();
 	    }, this.props.delay + 300);
 	  },
 
@@ -20102,7 +20173,7 @@
 	  },
 
 	  renderNavigation: function renderNavigation() {
-	    var _this2 = this;
+	    var _this3 = this;
 
 	    var navigationStyle = {
 	      position: 'fixed',
@@ -20120,9 +20191,9 @@
 	        backgroundColor: '#556270',
 	        padding: '5px',
 	        transition: 'all 0.2s',
-	        transform: _this2.state.activeSection === index ? 'scale(1.3)' : 'none'
+	        transform: _this3.state.activeSection === index ? 'scale(1.3)' : 'none'
 	      };
-	      return _react2['default'].createElement('a', { href: '#' + link, key: index, className: _this2.props.navigationAnchorClass || 'Navigation-Anchor', style: _this2.props.navigationAnchorClass ? null : anchorStyle });
+	      return _react2['default'].createElement('a', { href: '#' + link, key: index, className: _this3.props.navigationAnchorClass || 'Navigation-Anchor', style: _this3.props.navigationAnchorClass ? null : anchorStyle });
 	    });
 
 	    return _react2['default'].createElement('div', { className: this.props.navigationClass || 'Navigation', style: this.props.navigationClass ? null : navigationStyle }, anchors);
@@ -20146,6 +20217,117 @@
 
 /***/ },
 /* 164 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, '__esModule', {
+	  value: true
+	});
+
+	var _touch = __webpack_require__(165);
+
+	Object.defineProperty(exports, 'getTouchEventListeners', {
+	  enumerable: true,
+	  get: function get() {
+	    return _touch.getTouchEventListeners;
+	  }
+	});
+
+/***/ },
+/* 165 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	Object.defineProperty(exports, '__esModule', {
+	  value: true
+	});
+	exports.getTouchEventListeners = getTouchEventListeners;
+
+	function getTouchEventListeners(callback) {
+	  var dir = undefined;
+	  var swipeType = undefined;
+	  var startX = undefined;
+	  var startY = undefined;
+	  var distX = undefined;
+	  var distY = undefined;
+	  var threshold = 50; //required min distance traveled to be considered swipe
+	  var restraint = 20; // maximum distance allowed at the same time in perpendicular direction
+	  var allowedTime = 1000; // maximum time allowed to travel that distance
+	  var elapsedTime = undefined;
+	  var startTime = undefined;
+	  var handletouch = callback || function (evt, dir, phase, swipetype, distance) {};
+
+	  var _onTouchStart = function _onTouchStart(e) {
+	    var touchobj = e.changedTouches[0];
+	    dir = 'none';
+	    swipeType = 'none';
+	    startX = touchobj.pageX;
+	    startY = touchobj.pageY;
+	    startTime = new Date().getTime(); // record time when finger first makes contact with surface
+	    handletouch(e, 'none', 'start', swipeType, 0); // fire callback function with params dir="none", phase="start", swipetype="none" etc
+	    e.preventDefault();
+	  };
+
+	  var _onTouchMove = function _onTouchMove(e) {
+	    var touchobj = e.changedTouches[0];
+	    distX = touchobj.pageX - startX; // get horizontal dist traveled by finger while in contact with surface
+	    distY = touchobj.pageY - startY; // get vertical dist traveled by finger while in contact with surface
+	    if (Math.abs(distX) > Math.abs(distY)) {
+	      // if distance traveled horizontally is greater than vertically, consider this a horizontal movement
+	      dir = distX < 0 ? 'left' : 'right';
+	      handletouch(e, dir, 'move', swipeType, distX); // fire callback function with params dir="left|right", phase="move", swipetype="none" etc
+	    } else {
+	        // else consider this a vertical movement
+	        dir = distY < 0 ? 'up' : 'down';
+	        handletouch(e, dir, 'move', swipeType, distY); // fire callback function with params dir="up|down", phase="move", swipetype="none" etc
+	      }
+	    e.preventDefault(); // prevent scrolling when inside DIV
+	  };
+
+	  var _onTouchEnd = function _onTouchEnd(e) {
+	    var touchobj = e.changedTouches[0];
+	    elapsedTime = new Date().getTime() - startTime; // get time elapsed
+	    // console.log('onTouchEnd :: ', dir, elapsedTime, elapsedTime <= allowedTime, allowedTime, distY, threshold, distX, restraint);
+	    if (elapsedTime <= allowedTime) {
+	      // first condition for awipe met
+	      if (Math.abs(distX) >= threshold && Math.abs(distY) <= restraint) {
+	        // 2nd condition for horizontal swipe met
+	        swipeType = dir; // set swipeType to either "left" or "right"
+	      } else if (Math.abs(distY) >= threshold && Math.abs(distX) <= restraint) {
+	          // 2nd condition for vertical swipe met
+	          swipeType = dir; // set swipeType to either "top" or "down"
+	        }
+	    }
+	    // Fire callback function with params dir="left|right|up|down", phase="end", swipetype=dir etc:
+	    handletouch(e, dir, 'end', swipeType, dir == 'left' || dir == 'right' ? distX : distY);
+	    e.preventDefault();
+	  };
+
+	  return {
+	    onTouchStart: _onTouchStart,
+	    onTouchMove: _onTouchMove,
+	    onTouchEnd: _onTouchEnd
+	  };
+	}
+
+	// USAGE:
+	/*
+	ontouch(el, function(evt, dir, phase, swipetype, distance){
+	 // evt: contains original Event object
+	 // dir: contains "none", "left", "right", "top", or "down"
+	 // phase: contains "start", "move", or "end"
+	 // swipetype: contains "none", "left", "right", "top", or "down"
+	 // distance: distance traveled either horizontally or vertically, depending on dir value
+
+	 if ( phase == 'move' && (dir =='left' || dir == 'right') )
+	  console.log('You are moving the finger horizontally by ' + distance)
+	})
+	*/
+
+/***/ },
+/* 166 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -20228,7 +20410,7 @@
 	module.exports = exports['default'];
 
 /***/ },
-/* 165 */
+/* 167 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -20265,7 +20447,7 @@
 	module.exports = exports['default'];
 
 /***/ },
-/* 166 */
+/* 168 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
