@@ -20040,22 +20040,25 @@
 	  _onTouchHandler: function _onTouchHandler(e, direction, phase, swipetype, distance) {
 	    var _this = this;
 
-	    // console.log('onTouchHandler :: e :: ', e, direction, phase, swipetype, distance);
+	    console.log('onTouchHandler :: e :: ', direction, phase, swipetype, distance, e);
 
-	    // is touch ended with X swipe
-	    var isEndWithSwipeOnX = phase === 'end' && (swipetype === 'up' || swipetype === 'down');
-	    // don't calc children when not swipe X (we'll skip eitherways)
-	    var childrenLength = isEndWithSwipeOnX ? _react2['default'].Children.count(this.props.children) : 0;
+	    var isMove = phase === 'move';
+	    var isEndWithSwipeOnX = phase === 'end' && (swipetype === 'up' || swipetype === 'down'); // is touch ended with X swipe
+	    var childrenLength = isEndWithSwipeOnX ? _react2['default'].Children.count(this.props.children) : 0; // don't calc children when not swipe X (we'll skip eitherways)
 	    var avoidGoUp = this.state.activeSection === 0 && swipetype === 'down'; // don't go up when on top
 	    var avoidGoDown = this.state.activeSection === childrenLength - 1 && swipetype === 'up'; // ^^ opposite
 
+	    if (isMove) e.preventDefault(); // prevent scrolling when inside DIV
+
 	    if (!isEndWithSwipeOnX || avoidGoUp || avoidGoDown) {
-	      // console.log('onTouchHandler :: e :: ignore');
-	      e.preventDefault();
+	      console.log('onTouchHandler :: e :: ignore');
+	      // e.preventDefault();
 	      return;
 	    }
 
-	    // console.log('onTouchHandler :: state :: ', this.state.activeSection, this.state.sectionScrolledPosition);
+	    e.preventDefault();
+
+	    console.log('onTouchHandler :: state :: ', this.state.activeSection, this.state.sectionScrolledPosition);
 
 	    var delta = swipetype === 'up' ? -1 : swipetype === 'down' ? 1 : 0;
 	    var position = this.state.sectionScrolledPosition + delta * this.state.windowHeight;
@@ -20238,6 +20241,24 @@
 /* 165 */
 /***/ function(module, exports) {
 
+	/**
+	 * This is a lower level swipe detection function.
+	 *
+	 * getTouchEventListeners returns an object with the keys:
+	 *  onTouchStart: the touch start event listener one should add in an el for swipe
+	 *  onTouchMove: the touch move event listener one should add in an el for swipe
+	 *  onTouchEnd: the touch end event listener one should add in an el for swipe
+	 *
+	 * Those listeners are properly setup to measure distance and duration of a touch
+	 * and call the passed callback with swipe related information.
+	 *
+	 * callback is called with the arguments bellow:
+	 *  e: contains original Event object
+	 *  direction: contains "none", "left", "right", "top", or "down"
+	 *  phase: contains "start", "move", or "end"
+	 *  swipetype: contains "none", "left", "right", "top", or "down"
+	 *  distance: distance traveled either horizontally or vertically, depending on dir value
+	*/
 	'use strict';
 
 	Object.defineProperty(exports, '__esModule', {
@@ -20252,8 +20273,8 @@
 	  var startY = undefined;
 	  var distX = undefined;
 	  var distY = undefined;
-	  var threshold = 50; //required min distance traveled to be considered swipe
-	  var restraint = 20; // maximum distance allowed at the same time in perpendicular direction
+	  var threshold = 100; //required min distance traveled to be considered swipe
+	  var restraint = 100; // maximum distance allowed at the same time in perpendicular direction
 	  var allowedTime = 1000; // maximum time allowed to travel that distance
 	  var elapsedTime = undefined;
 	  var startTime = undefined;
@@ -20267,7 +20288,6 @@
 	    startY = touchobj.pageY;
 	    startTime = new Date().getTime(); // record time when finger first makes contact with surface
 	    handletouch(e, 'none', 'start', swipeType, 0); // fire callback function with params dir="none", phase="start", swipetype="none" etc
-	    e.preventDefault();
 	  };
 
 	  var _onTouchMove = function _onTouchMove(e) {
@@ -20283,7 +20303,6 @@
 	        dir = distY < 0 ? 'up' : 'down';
 	        handletouch(e, dir, 'move', swipeType, distY); // fire callback function with params dir="up|down", phase="move", swipetype="none" etc
 	      }
-	    e.preventDefault(); // prevent scrolling when inside DIV
 	  };
 
 	  var _onTouchEnd = function _onTouchEnd(e) {
@@ -20302,7 +20321,6 @@
 	    }
 	    // Fire callback function with params dir="left|right|up|down", phase="end", swipetype=dir etc:
 	    handletouch(e, dir, 'end', swipeType, dir == 'left' || dir == 'right' ? distX : distY);
-	    e.preventDefault();
 	  };
 
 	  return {
@@ -20311,20 +20329,6 @@
 	    onTouchEnd: _onTouchEnd
 	  };
 	}
-
-	// USAGE:
-	/*
-	ontouch(el, function(evt, dir, phase, swipetype, distance){
-	 // evt: contains original Event object
-	 // dir: contains "none", "left", "right", "top", or "down"
-	 // phase: contains "start", "move", or "end"
-	 // swipetype: contains "none", "left", "right", "top", or "down"
-	 // distance: distance traveled either horizontally or vertically, depending on dir value
-
-	 if ( phase == 'move' && (dir =='left' || dir == 'right') )
-	  console.log('You are moving the finger horizontally by ' + distance)
-	})
-	*/
 
 /***/ },
 /* 166 */

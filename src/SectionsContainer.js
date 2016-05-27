@@ -168,22 +168,25 @@ const SectionsContainer = React.createClass({
   },
 
   _onTouchHandler(e, direction, phase, swipetype, distance) {
-    // console.log('onTouchHandler :: e :: ', e, direction, phase, swipetype, distance);
+    console.log('onTouchHandler :: e :: ', direction, phase, swipetype, distance, e);
 
-    // is touch ended with X swipe
-    const isEndWithSwipeOnX = (phase === 'end' && (swipetype === 'up' || swipetype === 'down'));
-    // don't calc children when not swipe X (we'll skip eitherways)
-    let childrenLength = isEndWithSwipeOnX ? React.Children.count(this.props.children) : 0;
+    const isMove = phase === 'move';
+    const isEndWithSwipeOnX = (phase === 'end' && (swipetype === 'up' || swipetype === 'down')); // is touch ended with X swipe
+    let childrenLength = isEndWithSwipeOnX ? React.Children.count(this.props.children) : 0; // don't calc children when not swipe X (we'll skip eitherways)
     const avoidGoUp = (this.state.activeSection === 0 && swipetype === 'down'); // don't go up when on top
     const avoidGoDown = (this.state.activeSection === childrenLength - 1 && swipetype === 'up'); // ^^ opposite
 
+    if(isMove) e.preventDefault() // prevent scrolling when inside DIV
+
     if(!isEndWithSwipeOnX || avoidGoUp || avoidGoDown) {
-      // console.log('onTouchHandler :: e :: ignore');
-      e.preventDefault();
+      console.log('onTouchHandler :: e :: ignore');
+      // e.preventDefault();
       return;
     }
 
-    // console.log('onTouchHandler :: state :: ', this.state.activeSection, this.state.sectionScrolledPosition);
+    e.preventDefault();
+
+    console.log('onTouchHandler :: state :: ', this.state.activeSection, this.state.sectionScrolledPosition);
 
 	  let delta         = swipetype === 'up' ? -1 : swipetype === 'down' ? 1 : 0;
     let position      = this.state.sectionScrolledPosition + (delta * this.state.windowHeight);
