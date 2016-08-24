@@ -168,8 +168,7 @@ const SectionsContainer = React.createClass({
   },
 
   _onTouchHandler(e, direction, phase, swipetype, distance) {
-    console.log('onTouchHandler :: e :: ', direction, phase, swipetype, distance, e);
-
+    // console.log('onTouchHandler :: e :: ', direction, phase, swipetype, distance, e);
     const isMove = phase === 'move';
     const isEndWithSwipeOnX = (phase === 'end' && (swipetype === 'up' || swipetype === 'down')); // is touch ended with X swipe
     let childrenLength = isEndWithSwipeOnX ? React.Children.count(this.props.children) : 0; // don't calc children when not swipe X (we'll skip eitherways)
@@ -179,14 +178,12 @@ const SectionsContainer = React.createClass({
     if(isMove) e.preventDefault() // prevent scrolling when inside DIV
 
     if(!isEndWithSwipeOnX || avoidGoUp || avoidGoDown) {
-      console.log('onTouchHandler :: e :: ignore');
-      // e.preventDefault();
+      // console.log('onTouchHandler :: e :: ignore');
       return;
     }
 
     e.preventDefault();
-
-    console.log('onTouchHandler :: state :: ', this.state.activeSection, this.state.sectionScrolledPosition);
+    // console.log('onTouchHandler :: state :: ', this.state.activeSection, this.state.sectionScrolledPosition);
 
 	  let delta         = swipetype === 'up' ? -1 : swipetype === 'down' ? 1 : 0;
     let position      = this.state.sectionScrolledPosition + (delta * this.state.windowHeight);
@@ -221,11 +218,11 @@ const SectionsContainer = React.createClass({
     }, this.props.delay + 300);
   },
 
-  _mouseWheelHandler() {
+  _mouseWheelHandler(e) {
     this._removeMouseWheelEventHandlers();
 
-    let e             = window.event || e; // old IE support
-	  let delta         = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail)));
+    e                 = window.event || e; // old IE support
+    let delta         = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail)));
     let position      = this.state.sectionScrolledPosition + (delta * this.state.windowHeight);
     let activeSection = this.state.activeSection - delta;
     let childrenLength = React.Children.count(this.props.children)

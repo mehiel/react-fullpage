@@ -20040,8 +20040,7 @@
 	  _onTouchHandler: function _onTouchHandler(e, direction, phase, swipetype, distance) {
 	    var _this = this;
 
-	    console.log('onTouchHandler :: e :: ', direction, phase, swipetype, distance, e);
-
+	    // console.log('onTouchHandler :: e :: ', direction, phase, swipetype, distance, e);
 	    var isMove = phase === 'move';
 	    var isEndWithSwipeOnX = phase === 'end' && (swipetype === 'up' || swipetype === 'down'); // is touch ended with X swipe
 	    var childrenLength = isEndWithSwipeOnX ? _react2['default'].Children.count(this.props.children) : 0; // don't calc children when not swipe X (we'll skip eitherways)
@@ -20051,14 +20050,12 @@
 	    if (isMove) e.preventDefault(); // prevent scrolling when inside DIV
 
 	    if (!isEndWithSwipeOnX || avoidGoUp || avoidGoDown) {
-	      console.log('onTouchHandler :: e :: ignore');
-	      // e.preventDefault();
+	      // console.log('onTouchHandler :: e :: ignore');
 	      return;
 	    }
 
 	    e.preventDefault();
-
-	    console.log('onTouchHandler :: state :: ', this.state.activeSection, this.state.sectionScrolledPosition);
+	    // console.log('onTouchHandler :: state :: ', this.state.activeSection, this.state.sectionScrolledPosition);
 
 	    var delta = swipetype === 'up' ? -1 : swipetype === 'down' ? 1 : 0;
 	    var position = this.state.sectionScrolledPosition + delta * this.state.windowHeight;
@@ -20092,12 +20089,12 @@
 	    }, this.props.delay + 300);
 	  },
 
-	  _mouseWheelHandler: function _mouseWheelHandler() {
+	  _mouseWheelHandler: function _mouseWheelHandler(e) {
 	    var _this2 = this;
 
 	    this._removeMouseWheelEventHandlers();
 
-	    var e = window.event || e; // old IE support
+	    e = window.event || e; // old IE support
 	    var delta = Math.max(-1, Math.min(1, e.wheelDelta || -e.detail));
 	    var position = this.state.sectionScrolledPosition + delta * this.state.windowHeight;
 	    var activeSection = this.state.activeSection - delta;
